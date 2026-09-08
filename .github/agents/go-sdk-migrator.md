@@ -40,9 +40,12 @@ Before writing any code, read the following pairs of files to calibrate your und
 
 | Legacy (before) | New (after) |
 |---|---|
-| `pkg/tools/tfe/list_terraform_projects.go` | *(use the user-provided example as the reference)* |
-| `pkg/tools/tfe/workspace.go` (N/A yet) | `pkg/mcp-official/tools/tfe/workspace.go` |
-| `pkg/tools/tfe/create_project.go` (N/A yet) | `pkg/mcp-official/tools/tfe/organizations.go` |
+| `pkg/tools/tfe/list_workspaces.go` | `pkg/mcp-official/tools/tfe/workspaces_list_tool.go` |
+| `pkg/tools/tfe/list_terraform_orgs.go` | `pkg/mcp-official/tools/tfe/organizations_list_tool.go` |
+| `pkg/tools/tfe/get_workspace_details.go` | `pkg/mcp-official/tools/tfe/workspaces_get_tool.go` (Not yet added) |
+| `pkg/tools/tfe/create_project.go` | `pkg/mcp-official/tools/tfe/projects_create_tool.go` (Not yet added) |
+| `pkg/tools/tfe/delete_team.go` | `pkg/mcp-official/tools/tfe/teams_delete_tool.go` (Not yet added) |
+
 
 Also read `pkg/mcp-official/tools/tools.go` to understand how `RegisterTools` is structured.
 
