@@ -40,8 +40,8 @@ Before writing any code, read the following pairs of files to calibrate your und
 
 | Legacy (before) | New (after) |
 |---|---|
-| `pkg/tools/tfe/list_workspaces.go` | `pkg/mcp-official/tools/tfe/workspaces_list_tool.go` |
-| `pkg/tools/tfe/list_terraform_orgs.go` | `pkg/mcp-official/tools/tfe/organizations_list_tool.go` |
+| `pkg/tools/tfe/list_workspaces.go` | `pkg/mcp-official/tools/tfe/workspaces_list_tool.go` (Not yet added)|
+| `pkg/tools/tfe/list_terraform_orgs.go` | `pkg/mcp-official/tools/tfe/organizations_list_tool.go` (Not yet added)|
 | `pkg/tools/tfe/get_workspace_details.go` | `pkg/mcp-official/tools/tfe/workspaces_get_tool.go` (Not yet added) |
 | `pkg/tools/tfe/create_project.go` | `pkg/mcp-official/tools/tfe/projects_create_tool.go` (Not yet added) |
 | `pkg/tools/tfe/delete_team.go` | `pkg/mcp-official/tools/tfe/teams_delete_tool.go` (Not yet added) |
@@ -57,7 +57,7 @@ Also read `pkg/mcp-official/tools/tools.go` to understand how `RegisterTools` is
 | `github.com/mark3labs/mcp-go/mcp` | `github.com/modelcontextprotocol/go-sdk/mcp` |
 | `github.com/mark3labs/mcp-go/server` | *(remove — no longer needed)* |
 | `github.com/hashicorp/terraform-mcp-server/pkg/client` | `github.com/hashicorp/terraform-mcp-server/pkg/mcp-official/client` |
-| `github.com/sirupsen/logrus` | *(remove — logger is no longer passed to tools)* |
+| `github.com/sirupsen/logrus` | (same) (TBD)|
 
 ### 3. Tool Constructor Changes
 
@@ -87,30 +87,16 @@ func ListTerraformProjects(logger *log.Logger) server.ServerTool {
 **New pattern:**
 
 ```go
-func ListProjectsTool() *mcp.Tool {
-    return &mcp.Tool{
-        Name:         "list_terraform_projects",
-        Description:  `...`,
-        InputSchema:  withPaginationConstraints(inferSchema[ListProjectsArguments]("list_terraform_projects")),
-        OutputSchema: outputSchema[ProjectSummaryList]("list_terraform_projects"),
-        Annotations: &mcp.ToolAnnotations{
-            Title:           "List all Terraform projects",
-            OpenWorldHint:   ptr(true),
-            ReadOnlyHint:    true,
-            DestructiveHint: ptr(false),
-        },
-    }
-}
+/// Update SDK pattern
 ```
 
+**Update Differences**
 Key differences:
-- Function signature: `func <Name>Tool() *mcp.Tool` (no logger, returns `*mcp.Tool`)
+- Function signature: `func <Name>Tool() *mcp.Tool` (returns `*mcp.Tool`)
 - Tool struct: direct `&mcp.Tool{...}` literal, not `mcp.NewTool(...)`
-- `InputSchema` is derived from a typed `Arguments` struct using `inferSchema[T]()` helper
-- `OutputSchema` is derived from the response type using `outputSchema[T]()` helper
-- Pagination is added via `withPaginationConstraints()` wrapping `inferSchema`
 - `OpenWorldHint` requires `ptr(true)` — it is a `*bool`; `ReadOnlyHint` and `DestructiveHint` are different: `ReadOnlyHint` is a plain `bool`, `DestructiveHint` is a `*bool`
 
+**Update Info Here**
 ### 4. Arguments Struct (replaces per-field `mcp.WithString/WithNumber` calls)
 
 Each tool gets a typed `Arguments` struct. Field descriptions come from the `jsonschema` struct tag.
@@ -125,7 +111,7 @@ type ListProjectsArguments struct {
     Pagination
 }
 ```
-
+**Update Rules**
 Rules:
 - Required fields: no `omitempty` on the JSON tag
 - Optional fields: add `omitempty`
@@ -148,6 +134,7 @@ func listTerraformProjectsHandler(ctx context.Context, request mcp.CallToolReque
 }
 ```
 
+**Update with new handler check the migrated tools in `pkg/mcp-official`**
 **New pattern:**
 
 ```go
@@ -161,6 +148,7 @@ func ListProjectsFunc(ctx context.Context, request *mcp.CallToolRequest, input L
 }
 ```
 
+**Also update the key differences**
 Key differences:
 - Signature: `func <Name>Func(ctx context.Context, request *mcp.CallToolRequest, input <Name>Arguments) (*mcp.CallToolResult, *<ResponseType>, error)`
 - No logger parameter — errors are returned as Go errors, not `ToolError()`
@@ -193,6 +181,7 @@ PageNumber: pagination.Page,
 PageSize:   pagination.PageSize,
 ```
 
+**Update new with new implementation of pagination**
 **New** (embed `Pagination` in the Arguments struct; use `input.ListOptions()`):
 ```go
 type ListProjectsArguments struct {
@@ -208,21 +197,20 @@ projects, err := tfeClient.Projects.List(ctx, terraformOrgName, &tfe.ProjectList
 
 The `Pagination` struct and its `ListOptions()` method are defined in the shared helpers file in `pkg/mcp-official/tools/tfe/`.
 
+**`pkg/utils/result.go` does not exist, review this info, if does not exist dont include it**
 ### 8. Response Helpers
 
 **Legacy** (`mcp.NewToolResultText`, `mcp.NewToolResultError`, etc.) are **not available** in `modelcontextprotocol/go-sdk`.
 
 **New**: Return the typed struct directly as the second return value. The SDK serialises it automatically. For tool-level errors (not Go errors), check `pkg/utils/result.go` for any available helpers.
 
+**Update with new helpers**
 ### 9. Shared Helpers Available in `pkg/mcp-official/tools/tfe/`
 
 The following helpers will be present in a shared file in the package (check `pkg/mcp-official/tools/tfe/` for the current state):
 
 | Helper | Purpose |
 |---|---|
-| `inferSchema[T](toolName string) *jsonschema.Schema` | Derives an `InputSchema` from a typed struct using reflection |
-| `outputSchema[T](toolName string) *jsonschema.Schema` | Derives an `OutputSchema` from a typed response struct |
-| `withPaginationConstraints(s *jsonschema.Schema) *jsonschema.Schema` | Adds `minimum: 1` / `maximum: 100` constraints to `page`/`pageSize` fields |
 | `ptr[T any](v T) *T` | Returns a pointer to any value (used for `*bool` annotation fields) |
 | `nonNilSlice[T any](s []T) []T` | Returns an empty slice instead of nil (avoids `null` in JSON output) |
 | `paginationDetails(p *tfe.Pagination) PaginationDetails` | Maps a TFE pagination object to the shared `PaginationDetails` struct |
@@ -231,6 +219,7 @@ The following helpers will be present in a shared file in the package (check `pk
 
 If any of these are missing from the file, implement them before migrating the tool.
 
+**Update wiring with logger being passed here**
 ### 10. RegisterTools Wiring
 
 After creating the new tool files, register each tool pair in `pkg/mcp-official/tools/tools.go`:
@@ -251,8 +240,9 @@ Note: The `mcp.AddTool` call uses generics — the compiler infers `TInput` and 
 | Handler function | `<Action><Resource>Func(...)` | `ListProjectsFunc(...)` |
 | Arguments struct | `<Action><Resource>Arguments` | `ListProjectsArguments` |
 | Response struct | `<Resource>Summary` / `<Resource>Details` / `<Resource>Response` | `ProjectSummaryList`, `ProjectDetails`, `DeleteProjectResponse` |
-| File name | snake_case matching the tool name | `list_terraform_projects.go` |
+| File name | under_case tool name: `<Resource>_<Action>_tool.go` | `projects_list_tool.go` |
 
+**Update with new tests migration pattern**
 ## Test Migration
 
 Tests in the new package follow the same table-driven pattern as the legacy tests, but:
@@ -266,12 +256,13 @@ Tests in the new package follow the same table-driven pattern as the legacy test
 
 1. **`OpenWorldHint` is `*bool`** — must use `ptr(true)` / `ptr(false)`. `ReadOnlyHint` is a plain `bool` — do **not** use `ptr()`.
 2. **Do not import `pkg/client` directly** — always use `pkg/mcp-official/client` in the new package.
+**Update #3 (we do pass logger)**
 3. **Do not pass `logger` to tool functions** — the new SDK does not thread a logger through tool calls. Use `fmt.Errorf` for errors.
 4. **Do not call `json.Marshal` in the handler** — return the typed struct and let the SDK handle serialisation.
 5. **`nonNilSlice`** — always wrap slice fields with `nonNilSlice()` before embedding them in the response struct to avoid `null` in JSON output.
+**Update #6 (we do have a toolError for the new SDK)**
 6. **Validation errors vs. runtime errors** — both are returned as `(nil, nil, fmt.Errorf(...))`. There is no separate `ToolError()` helper in the new SDK path.
 7. **`ENABLE_TF_OPERATIONS` gate** — destructive tools (delete, force-unlock, action_run) in the legacy code are gated behind `isTerraformOperationsEnabled()` in `dynamic_tool.go`. Replicate this gate in the new `RegisterTools()` for the same tools.
-8. **`InputSchema` can be `nil`** — if the tool takes no inputs, omit `InputSchema`. The SDK handles nil schemas correctly.
 
 ## End-to-End Checklist
 
