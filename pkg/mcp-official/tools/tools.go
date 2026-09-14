@@ -1,8 +1,11 @@
 package tools
 
 import (
+	"strings"
+
 	tfeTools "github.com/hashicorp/terraform-mcp-server/pkg/mcp-official/tools/tfe"
 	"github.com/hashicorp/terraform-mcp-server/pkg/toolsets"
+	"github.com/hashicorp/terraform-mcp-server/pkg/utils"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	log "github.com/sirupsen/logrus"
 )
@@ -37,11 +40,25 @@ var officialFactories = map[string]func(svr *mcp.Server){
 	},
 }
 
+// isTerraformOperationsEnabled checks if ENABLE_TF_OPERATIONS is set to true
+func isTerraformOperationsEnabled() bool {
+	envVar := utils.GetEnv("ENABLE_TF_OPERATIONS", "false")
+	return strings.ToLower(envVar) == "true"
+}
+
 func RegisterTools(svr *mcp.Server, logger *log.Logger, filter toolsets.ToolFilter) {
+
+	tfOpsEnabled := isTerraformOperationsEnabled()
+
 	for _, td := range toolsets.AllTools {
 		if !filter.IsToolEnabled(td.Name) {
 			continue
 		}
+
+		if td.RequiresTFOps && !tfOpsEnabled {
+			continue
+		}
+
 		if register, ok := officialFactories[td.Name]; ok {
 			register(svr)
 		}
