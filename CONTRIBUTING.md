@@ -19,6 +19,7 @@ Thank you for contributing. Contributions are released under the project's
 | [Welcome and scope](#welcome-and-scope) | What we accept and when to open an issue |
 | [Quickstart](#quickstart) | Build and run the project locally |
 | [Submit changes](#submit-changes) | Branches, commits, pull requests, and size limits |
+| [Code ownership](#code-ownership) | How ownership works and how teams request it |
 | [Code and style standards](#code-and-style-standards) | Required Go and MCP conventions |
 | [Testing and linting](#testing-and-linting) | Checks to run before review |
 | [AI-assisted contributions](#ai-assisted-contributions) | Expectations for AI-generated work |
@@ -147,6 +148,63 @@ Before marking a pull request ready for review:
   when prompted.
 
 All required CI checks must pass before merge.
+
+## Code ownership
+
+[`CODEOWNERS`](CODEOWNERS) tells GitHub which teams maintain specific parts of
+the repository. When a pull request changes a matching path, GitHub requests
+review from that path's owners. Branch protection may require their approval.
+
+Code ownership assigns review and maintenance responsibility. It does not grant
+repository access or permission to merge.
+
+### How it works
+
+The repository-wide default owner is:
+
+```text
+* @hashicorp/team-proj-mcp-servers
+```
+
+More specific entries assign a domain to another team:
+
+```text
+/pkg/mcp-official/tools/search/** @hashicorp/team-tf-search
+```
+
+CODEOWNERS patterns are evaluated from top to bottom, and the last matching
+pattern wins. Owners from earlier matching patterns do not carry over. List
+every team that must review the path on the final matching line:
+
+```text
+/path/to/domain/** @hashicorp/team-proj-mcp-servers @hashicorp/team-name
+```
+
+Use narrow patterns that cover the implementation, tests, registration,
+configuration, and documentation the team will maintain. See
+[GitHub's CODEOWNERS documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
+for pattern syntax.
+
+### Request ownership for your team
+
+Before editing `CODEOWNERS`, open a
+[GitHub issue](https://github.com/hashicorp/terraform-mcp-server/issues/new/choose)
+and tag `@hashicorp/team-proj-mcp-servers`. Include:
+
+- The GitHub team handle
+- The paths the team wants to own
+- The product or technical domain covered by those paths
+- Why the team is the appropriate long-term owner
+- Confirmation that the team will review changes and maintain the code
+- Any existing owners that should remain co-owners
+
+The GitHub team must be visible and have explicit write access to the
+repository. Project maintainers will confirm the final patterns and whether
+shared ownership is required.
+
+After approval, submit a focused pull request that updates `CODEOWNERS` and
+links to the issue. Do not bury an ownership change in an unrelated pull
+request or request ownership for a one-time contribution.
 
 ## Code and style standards
 
