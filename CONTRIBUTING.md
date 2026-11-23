@@ -233,7 +233,10 @@ responsible for the entire change, regardless of how it was produced.
 | --- | --- |
 | Contribution design or project questions | [GitHub Discussions](https://github.com/hashicorp/terraform-mcp-server/discussions) |
 | Bugs and feature requests | [GitHub Issues](https://github.com/hashicorp/terraform-mcp-server/issues) |
+| HCP Terraform or Terraform Enterprise support | [HashiCorp Support](https://support.hashicorp.com/hc/en-us/requests/new) |
+| Terraform language and workflow questions | [HashiCorp Discuss](https://discuss.hashicorp.com/) |
 | Security vulnerabilities | `security@hashicorp.com` |
 | Community behavior | [HashiCorp Community Guidelines](https://www.hashicorp.com/en/community-guidelines) |
 
-Ask early when you are unsure. A short discussion is easier than rewriting a completed contribution.
+Ask early when you are unsure. A short discussion is easier than rewriting a
+completed contribution.

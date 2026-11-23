@@ -58,7 +58,6 @@ Build and start the server in one terminal:
 make build
 
 TF_X_OFFICIAL_SDK_ENABLED=true \
-ENABLE_TF_OPERATIONS=true \
   ./bin/terraform-mcp-server streamable-http \
   --transport-host 127.0.0.1 \
   --transport-port 8080
